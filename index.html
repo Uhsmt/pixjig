@@ -4,286 +4,329 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PixJig</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg:          #F5F1E8;
+    --surface:     #FDFCF9;
+    --border:      #DDD8CC;
+    --border-mid:  #C0BAB0;
+    --text:        #111110;
+    --text-mid:    #58544C;
+    --text-faint:  #9C9890;
+    --accent:      #C8401A;
+    --accent-dark: #A03314;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #0f0f1a;
-    color: #e0e0f0;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
-  .screen { display: none; width: 100%; max-width: 640px; padding: 1.5rem; }
-  .screen.active { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+  .screen { display: none; width: 100%; max-width: 520px; padding: 2rem 1.5rem; }
+  .screen.active {
+    display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+    max-height: 100dvh; overflow-y: auto;
+  }
 
   /* ===== Setup ===== */
-  #screen-setup { animation: fadeIn 0.4s ease; }
+  #screen-setup { animation: fadeIn 0.35s ease; }
 
   .title {
-    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 8vw, 3.2rem);
     font-weight: 800;
-    text-align: center;
-    background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    line-height: 1;
+    align-self: flex-start;
   }
-  label {font-size: 0.8rem; font-weight: 600; color: #a0a0c0; text-transform: uppercase;
-          letter-spacing: 0.08em; align-self: flex-start; width: 100%; }
+
+  label {
+    font-size: 0.68rem; font-weight: 600; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    align-self: flex-start; width: 100%;
+  }
 
   textarea {
-    width: 100%; height: 54px;
-    background: #1a1a2e; border: 1.5px solid #333360; border-radius: 10px;
-    color: #e0e0f0; font-size: 0.9rem; padding: 0.6rem 0.9rem;
-    resize: none; outline: none; transition: border-color 0.2s; font-family: inherit;
+    width: 100%; height: 52px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 3px; color: var(--text); font-size: 0.9rem;
+    padding: 0.65rem 0.85rem; resize: none; outline: none;
+    transition: border-color 0.15s; font-family: 'DM Sans', sans-serif;
   }
-  textarea:focus { border-color: #7c3aed; }
+  textarea::placeholder { color: var(--text-faint); }
+  textarea:focus { border-color: var(--text); }
 
-  .difficulty-group { display: flex; gap: 0.6rem; width: 100%; }
+  .difficulty-group { display: flex; gap: 0.5rem; width: 100%; }
   .diff-btn {
     flex: 1; padding: 0.6rem 0;
-    background: #1a1a2e; border: 1.5px solid #333360; border-radius: 8px;
-    color: #a0a0c0; font-size: 0.85rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 3px; color: var(--text-mid);
+    font-size: 0.82rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.12s; line-height: 1.4;
   }
-  .diff-btn:hover { border-color: #7c3aed; color: #e0e0f0; }
-  .diff-btn.selected { background: #3b1fa3; border-color: #7c3aed; color: #fff; }
+  .diff-btn small { font-size: 0.68rem; color: var(--text-faint); display: block; font-weight: 400; }
+  .diff-btn:hover { border-color: var(--text); color: var(--text); }
+  .diff-btn.selected { background: var(--text); border-color: var(--text); color: #fff; }
+  .diff-btn.selected small { color: rgba(255,255,255,0.5); }
 
   .btn-primary {
     width: 100%; padding: 0.85rem;
-    background: linear-gradient(135deg, #7c3aed, #2563eb); border: none;
-    border-radius: 10px; color: #fff; font-size: 1rem; font-weight: 700;
-    cursor: pointer; transition: opacity 0.2s, transform 0.1s; letter-spacing: 0.02em;
+    background: var(--text); border: none; border-radius: 3px;
+    color: #fff; font-size: 0.9rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
   }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary:disabled { background: var(--border); color: var(--text-faint); cursor: not-allowed; }
 
-  .examples { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .examples { width: 100%; display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .example-chip {
-    padding: 0.3rem 0.7rem;
-    background: #1a1a2e; border: 1px solid #333360; border-radius: 20px;
-    font-size: 0.75rem; color: #8888aa; cursor: pointer; transition: all 0.15s;
+    padding: 0.26rem 0.6rem;
+    background: transparent; border: 1px solid var(--border); border-radius: 2px;
+    font-size: 0.72rem; color: var(--text-mid);
+    cursor: pointer; transition: all 0.12s;
+    font-family: 'DM Sans', sans-serif;
   }
-  .example-chip:hover { border-color: #7c3aed; color: #c0c0e0; }
+  .example-chip:hover { border-color: var(--text); color: var(--text); background: var(--surface); }
 
   /* ===== Loading ===== */
   #screen-loading { gap: 2rem; animation: fadeIn 0.3s ease; }
-  .spinner-wrap { position: relative; width: 80px; height: 80px; }
+  .spinner-wrap { position: relative; width: 40px; height: 40px; }
   .spinner {
-    width: 80px; height: 80px;
-    border: 4px solid #1a1a2e; border-top-color: #7c3aed;
-    border-radius: 50%; animation: spin 0.9s linear infinite;
+    width: 40px; height: 40px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
   }
-  .loading-text { font-size: 1rem; color: #a0a0c0; text-align: center; }
-  .loading-sub  { font-size: 0.8rem; color: #666688; text-align: center; }
+  .loading-text { font-size: 0.9rem; color: var(--text); font-weight: 500; text-align: center; }
+  .loading-sub  { font-size: 0.75rem; color: var(--text-mid); text-align: center; }
 
   /* ===== Game ===== */
-  #screen-game { max-width: 720px; gap: 0.75rem; animation: fadeIn 0.4s ease; }
+  #screen-game { max-width: 680px; gap: 0.6rem; animation: fadeIn 0.35s ease; }
 
   .game-header {
     display: flex; justify-content: space-between; align-items: center;
     width: 100%; gap: 0.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
   }
   .stat-box {
-    display: flex; flex-direction: column; align-items: center;
-    background: #1a1a2e; border: 1px solid #333360; border-radius: 8px;
-    padding: 0.4rem 0.9rem; min-width: 70px;
+    display: flex; align-items: baseline; gap: 0.3rem;
   }
-  .stat-label { font-size: 0.65rem; color: #666688; text-transform: uppercase; letter-spacing: 0.07em; }
-  .stat-value { font-size: 1.05rem; font-weight: 700; color: #c0c0f0; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 0.62rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.09em; font-weight: 500; }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem; font-weight: 700; color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
 
   .btn-small {
-    padding: 0.45rem 0.9rem;
-    background: #1a1a2e; border: 1px solid #333360; border-radius: 8px;
-    color: #a0a0c0; font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    transition: all 0.15s; white-space: nowrap;
+    padding: 0.38rem 0.7rem;
+    background: transparent; border: 1px solid var(--border); border-radius: 2px;
+    color: var(--text-mid); font-size: 0.75rem; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.12s; white-space: nowrap;
   }
-  .btn-small:hover { border-color: #7c3aed; color: #e0e0f0; }
+  .btn-small:hover { border-color: var(--text); color: var(--text); }
 
   .board-wrap { position: relative; width: 100%; }
 
   #board {
     display: grid;
     width: 100%;
-    gap: 0;               /* gap: 0 — borders handle separation */
-    border-radius: 8px;
+    gap: 0;
+    border-radius: 2px;
     overflow: hidden;
-    background: #0f0f1a;
+    background: var(--border);
     touch-action: none;
     user-select: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
   }
 
   /* ===== Piece ===== */
   .piece {
     position: relative;
     cursor: grab;
-    border-radius: 0;
-    /* border colors set per-edge via JS */
-    border: 1.5px solid rgba(255,255,255,0.12);
-    background-origin: border-box; /* image covers full piece incl. border area */
-    transition: transform 0.12s, opacity 0.12s;
-    background-color: #1a1a2e;
+    /* No border — separation is via inset box-shadow so joined pieces have zero gap */
+    transition: transform 0.1s, opacity 0.1s, box-shadow 0.1s;
+    background-color: #EDE9DF;
   }
   .piece:active { cursor: grabbing; }
 
-  /* Dragging state */
-  .piece.dragging   { opacity: 0.4; transform: scale(1.06); z-index: 10; }
-  .piece.drag-over  { outline: 2px solid #7c3aed; outline-offset: -2px; transform: scale(0.96); }
-
-  /* Group visual: a subtle warm glow on outer edges of a group piece */
-  .piece.grouped {
-    box-shadow: 0 0 0 0 transparent; /* placeholder — edges controlled via border-color */
-  }
+  .piece.dragging  { opacity: 0.3; transform: scale(1.04); z-index: 10; }
+  .piece.drag-over { outline: 3px solid var(--accent); outline-offset: -2px; box-shadow: inset 0 0 0 3px var(--accent) !important; }
 
   /* Clear wave animation */
   .piece.wave-anim {
-    animation: wavePop 0.6s ease forwards;
+    animation: wavePop 0.65s ease forwards;
     animation-delay: calc(var(--piece-index) * 0.06s);
   }
 
   /* Preview strip */
-  .preview-wrap { display: flex; align-items: center; gap: 0.75rem; width: 100%; }
-  .preview-label { font-size: 0.7rem; color: #666688; text-transform: uppercase;
-                   letter-spacing: 0.07em; white-space: nowrap; }
-  #preview-img {
-    height: 72px; width: 72px; object-fit: cover;
-    border-radius: 6px; border: 1.5px solid #333360; flex-shrink: 0;
+  .preview-wrap {
+    display: flex; align-items: center; gap: 0.65rem; width: 100%;
+    padding-top: 0.5rem; border-top: 1px solid var(--border);
   }
-  .preview-prompt { font-size: 0.78rem; color: #8888aa; line-height: 1.4;
-    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .preview-label {
+    font-size: 0.6rem; color: var(--text-faint); text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 600; white-space: nowrap;
+  }
+  #preview-img {
+    height: 52px; width: 52px; object-fit: cover;
+    border-radius: 2px; border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .preview-prompt {
+    font-size: 0.74rem; color: var(--text-mid); line-height: 1.45;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  }
 
   /* Attribution */
-  .attribution {
-    font-size: 0.7rem; color: #555578; text-align: right; width: 100%;
-  }
-  .attribution a { color: #6666a0; text-decoration: none; }
-  .attribution a:hover { color: #9999c8; text-decoration: underline; }
+  .attribution { font-size: 0.63rem; color: var(--text-faint); text-align: right; width: 100%; }
+  .attribution a { color: var(--text-mid); text-decoration: none; }
+  .attribution a:hover { color: var(--accent); }
 
   /* ===== Preview Countdown Overlay ===== */
   #overlay-preview {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(10,10,20,0.6);
-    backdrop-filter: blur(2px);
+    background: rgba(245,241,232,0.82);
+    backdrop-filter: blur(5px);
     z-index: 60;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.2rem;
-    pointer-events: none; /* let board show below */
+    align-items: center; justify-content: center;
+    gap: 1rem;
+    pointer-events: none;
   }
   #overlay-preview.active { display: flex; }
 
-  .preview-count-badge {
-    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-  }
+  .preview-count-badge { display: flex; flex-direction: column; align-items: center; gap: 0.65rem; }
   .preview-count-msg {
-    font-size: 1.1rem; font-weight: 700; color: #e0e0f0;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-    letter-spacing: 0.04em;
+    font-size: 0.72rem; font-weight: 600; color: var(--text-mid);
+    text-transform: uppercase; letter-spacing: 0.12em;
   }
   .countdown-circle {
-    width: 80px; height: 80px;
-    border: 4px solid #7c3aed;
-    border-radius: 50%;
+    width: 68px; height: 68px;
+    border: 1.5px solid var(--text); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(15,15,26,0.85);
-    box-shadow: 0 0 24px rgba(124,58,237,0.5);
-    font-size: 2.4rem; font-weight: 900; color: #e0e0f0;
-    transition: transform 0.2s;
+    background: var(--surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem; font-weight: 700; color: var(--text);
+    transition: transform 0.15s;
   }
-  .countdown-circle.tick { animation: countTick 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+  .countdown-circle.tick { animation: countTick 0.3s cubic-bezier(0.34,1.56,0.64,1); }
 
   /* ===== Clear Overlay ===== */
   #overlay-clear {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(10,10,20,0.85);
+    background: var(--bg);
     z-index: 100;
     flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 1.5rem;
-    backdrop-filter: blur(6px);
+    gap: 1.1rem;
+    overflow-y: auto;
+    padding: 2rem 1.5rem;
   }
   #overlay-clear.active { display: flex; }
 
   .clear-title {
-    font-size: clamp(2.5rem, 10vw, 4.5rem); font-weight: 900;
-    background: linear-gradient(135deg, #fbbf24, #f472b6, #a78bfa);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1); text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 10vw, 5rem); font-weight: 800;
+    text-transform: uppercase; letter-spacing: -0.04em;
+    color: var(--text); line-height: 1; text-align: center;
+    animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both,
+               tada 0.7s 0.55s ease both;
   }
 
   /* Stars */
   .clear-stars-row { display: flex; gap: 0.2rem; justify-content: center; }
   .clear-star {
-    display: inline-block;
-    font-size: 2.8rem; line-height: 1;
+    display: inline-block; font-size: 2.4rem; line-height: 1;
     animation: starPop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   .clear-star:nth-child(1) { animation-delay: 0.1s; }
-  .clear-star:nth-child(2) { animation-delay: 0.28s; }
-  .clear-star:nth-child(3) { animation-delay: 0.46s; }
+  .clear-star:nth-child(2) { animation-delay: 0.26s; }
+  .clear-star:nth-child(3) { animation-delay: 0.42s; }
 
   /* Score */
   .clear-score-row { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
-  .clear-score-label { font-size: 0.68rem; color: #8888aa; text-transform: uppercase; letter-spacing: 0.1em; }
+  .clear-score-label { font-size: 0.62rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
   .clear-score-value {
-    font-size: clamp(2rem, 8vw, 3rem); font-weight: 900; color: #e0e0f0;
-    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(2.4rem, 9vw, 3.8rem); font-weight: 700; color: var(--text);
+    font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
   }
 
-  .clear-stats { display: flex; gap: 1.5rem; text-align: center; }
-  .clear-stat  { display: flex; flex-direction: column; gap: 0.25rem; }
-  .clear-stat-label { font-size: 0.75rem; color: #8888aa; text-transform: uppercase; letter-spacing: 0.08em; }
-  .clear-stat-value { font-size: 1.8rem; font-weight: 800; color: #e0e0f0; }
-  .clear-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
-  .btn-retry { background: linear-gradient(135deg, #7c3aed, #2563eb); }
+  .clear-stats {
+    display: flex; gap: 2rem; text-align: center;
+    padding: 0.7rem 1.5rem;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    width: 100%; max-width: 320px; justify-content: center;
+  }
+  .clear-stat  { display: flex; flex-direction: column; gap: 0.18rem; }
+  .clear-stat-label { font-size: 0.6rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .clear-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .clear-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 360px; }
+  .btn-retry { background: var(--accent); }
+  .btn-retry:hover { background: var(--accent-dark) !important; }
 
   /* Score breakdown */
   .score-breakdown {
-    background: rgba(20,20,38,0.9);
-    border: 1px solid #2e2e58;
-    border-radius: 10px;
-    padding: 0.65rem 1rem;
-    width: 100%; max-width: 340px;
-    display: flex; flex-direction: column; gap: 0.35rem;
-    font-size: 0.82rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 3px;
+    padding: 0.7rem 0.9rem; width: 100%; max-width: 320px;
+    display: flex; flex-direction: column; gap: 0.38rem; font-size: 0.78rem;
   }
-  .bd-row { display: flex; align-items: center; gap: 0.45rem; }
-  .bd-label { color: #8888aa; min-width: 3em; }
-  .bd-val   { font-weight: 700; color: #c0c0f0; min-width: 3.2em; text-align: right; }
-  .bd-arr   { color: #4a4a70; }
-  .bd-mult  { font-weight: 800; font-size: 0.92rem; min-width: 3.8em; }
-  .bd-par   { color: #555580; font-size: 0.75rem; margin-left: auto; }
+  .bd-row { display: flex; align-items: center; gap: 0.4rem; }
+  .bd-label { color: var(--text-mid); min-width: 3em; font-size: 0.72rem; }
+  .bd-val   { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--text); min-width: 3.2em; text-align: right; font-size: 0.72rem; }
+  .bd-arr   { color: var(--text-faint); }
+  .bd-mult  { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.78rem; min-width: 3.6em; }
+  .bd-par   { color: var(--text-faint); font-size: 0.68rem; margin-left: auto; }
   .bd-formula {
-    border-top: 1px solid #2e2e58; margin-top: 0.1rem; padding-top: 0.35rem;
-    text-align: right; color: #8888aa; font-size: 0.8rem; line-height: 1.5;
+    border-top: 1px solid var(--border); margin-top: 0.08rem; padding-top: 0.38rem;
+    text-align: right; color: var(--text-mid); font-size: 0.72rem; line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
   }
-  .bd-formula strong { color: #c0c0f0; font-size: 0.9rem; }
+  .bd-formula strong { color: var(--text); font-size: 0.8rem; }
 
   .error-msg {
-    color: #f87171; font-size: 0.85rem;
-    background: #2a1010; border: 1px solid #7f1d1d; border-radius: 8px;
-    padding: 0.6rem 1rem; width: 100%; display: none;
+    color: #B03030; font-size: 0.82rem;
+    background: #FDF5F5; border: 1px solid #E8C0C0; border-radius: 3px;
+    padding: 0.55rem 0.85rem; width: 100%; display: none;
   }
   .error-msg.active { display: block; }
 
   /* ===== Keyframes ===== */
-  @keyframes fadeIn   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  @keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
   @keyframes spin     { to { transform: rotate(360deg); } }
-  @keyframes bounceIn { from{opacity:0;transform:scale(0.3)} 60%{transform:scale(1.1)} to{opacity:1;transform:scale(1)} }
-  @keyframes wavePop  { 0%{transform:scale(1)} 40%{transform:scale(1.12) rotate(3deg);filter:brightness(1.3)} 100%{transform:scale(1);filter:brightness(1)} }
-  @keyframes countTick { from{transform:scale(1.4)} to{transform:scale(1)} }
-  @keyframes starPop  { 0%{transform:scale(0) rotate(-30deg);opacity:0} 60%{transform:scale(1.35) rotate(8deg);opacity:1} 100%{transform:scale(1) rotate(0)} }
-
+  @keyframes bounceIn { from{opacity:0;transform:scale(0.25)} 55%{transform:scale(1.12)} 75%{transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+  @keyframes wavePop  { 0%{transform:scale(1)} 40%{transform:scale(1.14) rotate(4deg);filter:brightness(1.2)} 100%{transform:scale(1) rotate(0);filter:none} }
+  @keyframes countTick { from{transform:scale(1.45)} to{transform:scale(1)} }
+  @keyframes starPop  { 0%{transform:scale(0) rotate(-30deg);opacity:0} 60%{transform:scale(1.4) rotate(8deg);opacity:1} 100%{transform:scale(1) rotate(0)} }
+  @keyframes tada {
+    0%  { transform:scale(1); }
+    10% { transform:scale(0.95) rotate(-2deg); }
+    25% { transform:scale(1.12) rotate(2deg); }
+    40% { transform:scale(1.12) rotate(-2deg); }
+    55% { transform:scale(1.12) rotate(2deg); }
+    70% { transform:scale(1.06) rotate(-1deg); }
+    100%{ transform:scale(1) rotate(0); }
+  }
   @keyframes confettiFall {
     0%   { transform: translateY(-20px) rotate(0deg) scaleX(1); opacity: 1; }
     50%  { transform: translateY(50vh) rotate(360deg) scaleX(-1); opacity: 1; }
@@ -292,60 +335,47 @@
   }
 
   /* ===== High Score Display (Setup) ===== */
-  .hs-display {
-    display: flex; gap: 0.6rem; justify-content: center; width: 100%; min-height: 2.6rem;
-  }
+  .hs-display { display: flex; gap: 0.45rem; justify-content: flex-start; width: 100%; min-height: 2.2rem; }
   .hs-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.12rem;
-    background: #1a1a2e; border: 1px solid #2e2e58; border-radius: 8px; padding: 0.35rem 0.4rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 2px;
+    padding: 0.3rem 0.65rem;
   }
-  .hs-item-label { font-size: 0.58rem; color: #666688; text-transform: uppercase; letter-spacing: 0.07em; }
-  .hs-item-val { font-size: 0.88rem; color: #c0c0f0; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .hs-item-label { font-size: 0.56rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; line-height: 1; }
+  .hs-item-val { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text); font-weight: 700; line-height: 1; }
 
   /* ===== New Record Badge ===== */
   .new-record-badge {
     display: none;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #0f0f1a;
-    font-weight: 900; font-size: 1.1rem;
-    padding: 0.4rem 1.4rem; border-radius: 20px;
-    animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-    letter-spacing: 0.06em;
+    background: var(--accent); color: #fff;
+    font-weight: 700; font-size: 0.72rem;
+    padding: 0.32rem 0.9rem; border-radius: 2px;
+    animation: bounceIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    letter-spacing: 0.1em; text-transform: uppercase;
   }
   .new-record-badge.active { display: inline-block; }
 
   /* ===== Clear High Score Row ===== */
-  .clear-hs-row {
-    font-size: 0.82rem; color: #8888aa;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .clear-hs-val { color: #c0c0f0; font-weight: 700; }
+  .clear-hs-row { font-size: 0.76rem; color: var(--text-mid); display: flex; align-items: center; gap: 0.4rem; }
+  .clear-hs-val { color: var(--text); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
 
   /* ===== Confetti ===== */
   .confetti-piece {
     position: fixed; pointer-events: none; z-index: 300;
-    width: 8px; height: 10px; border-radius: 2px;
+    width: 7px; height: 9px; border-radius: 1px;
     animation: confettiFall linear forwards;
   }
 
   @media (max-width: 480px) {
     .screen { padding: 1rem; }
-    #screen-game { gap: 0.5rem; }
-    .game-header { gap: 0.4rem; }
-    .stat-box { padding: 0.3rem 0.55rem; min-width: 58px; }
-    .stat-label { font-size: 0.58rem; }
-    .stat-value { font-size: 0.95rem; }
-    .btn-small { padding: 0.35rem 0.65rem; font-size: 0.75rem; }
-    #overlay-clear {
-      justify-content: flex-start;
-      overflow-y: auto;
-      padding: 1.5rem 1rem;
-      gap: 1rem;
-    }
-    .clear-title { font-size: clamp(2rem, 9vw, 3rem); }
-    .clear-star { font-size: 2.2rem; }
+    #screen-game { gap: 0.45rem; }
+    .game-header { gap: 0.35rem; padding-bottom: 0.45rem; }
+    .stat-value { font-size: 0.9rem; }
+    .btn-small { padding: 0.3rem 0.55rem; font-size: 0.72rem; }
+    #overlay-clear { justify-content: flex-start; padding: 1.25rem 1rem; gap: 0.9rem; }
+    .clear-title { font-size: clamp(2rem, 9vw, 2.8rem); }
     .score-breakdown { max-width: 100%; }
-    .clear-buttons { flex-direction: column; width: 100%; max-width: 300px; }
+    .clear-buttons { flex-direction: column; width: 100%; max-width: 280px; }
     .clear-buttons .btn-primary { width: 100%; }
   }
 </style>
@@ -357,12 +387,12 @@
   <h1 class="title">PixJig</h1>
 
   <div class="examples" id="examples">
-    <span class="example-chip">🌸 桜と富士山</span>
-    <span class="example-chip">🌊 海と灯台</span>
-    <span class="example-chip">🏙️ 夜の都市</span>
-    <span class="example-chip">🦊 森の狐</span>
-    <span class="example-chip">🌌 銀河と星空</span>
-    <span class="example-chip">🐉 ドラゴン</span>
+    <span class="example-chip">🦚 孔雀</span>
+    <span class="example-chip">🐠 珊瑚礁</span>
+    <span class="example-chip">🎆 花火</span>
+    <span class="example-chip">🦜 熱帯の鳥</span>
+    <span class="example-chip">🌈 オーロラ</span>
+    <span class="example-chip">🍁 紅葉の森</span>
   </div>
 
   <textarea id="prompt-input" placeholder="キーワードを入力（例: red fox forest, Tokyo night）"></textarea>
@@ -463,6 +493,7 @@ const State = {
   startTime: null,
   elapsedMs: 0,
   timerInterval: null,
+  scoreInterval: null,
   isSolved: false,
   // drag
   dragSrcPos: null,
@@ -696,13 +727,12 @@ function applyPieceStyle(el, piece, boardW, boardH, pieceW, pieceH, n) {
   el.style.backgroundSize     = `${boardW}px ${boardH}px`;
   el.style.backgroundPosition = `${-col * pieceW}px ${-row * pieceH}px`;
   el.style.backgroundRepeat   = 'no-repeat';
-  el.style.backgroundOrigin   = 'border-box';
 }
 
-// Per-edge border: transparent on joined edges (background shows through),
-// visible on unjoined edges (creates separation).
-const SEP   = 'rgba(255,255,255,0.13)';
-const JOINED = 'transparent';
+// Per-edge separation via inset box-shadow.
+// Joined edges get no shadow (zero gap between pieces = perfect seam).
+// Unjoined edges get a 1px inset shadow drawn on top of the image.
+const SEP_SHADOW = 'rgba(0,0,0,0.35)';
 
 function applyPieceEdges(el, pos, n) {
   const gid = State.pieces[pos].groupId;
@@ -714,10 +744,12 @@ function applyPieceEdges(el, pos, n) {
   const rightJoined  = col < n-1  && State.pieces[pos + 1]?.groupId === gid;
   const bottomJoined = row < n-1  && State.pieces[pos + n]?.groupId === gid;
 
-  el.style.borderTopColor    = topJoined    ? JOINED : SEP;
-  el.style.borderLeftColor   = leftJoined   ? JOINED : SEP;
-  el.style.borderRightColor  = rightJoined  ? JOINED : SEP;
-  el.style.borderBottomColor = bottomJoined ? JOINED : SEP;
+  const shadows = [];
+  if (!topJoined)    shadows.push(`inset 0 2px 0 ${SEP_SHADOW}`);
+  if (!leftJoined)   shadows.push(`inset 2px 0 0 ${SEP_SHADOW}`);
+  if (!rightJoined)  shadows.push(`inset -2px 0 0 ${SEP_SHADOW}`);
+  if (!bottomJoined) shadows.push(`inset 0 -2px 0 ${SEP_SHADOW}`);
+  el.style.boxShadow = shadows.length ? shadows.join(', ') : 'none';
 }
 
 // =====================================================
@@ -778,9 +810,6 @@ function swapGroup(srcPos, dstPos) {
   renderBoard();
   checkSolved();
 }
-
-// For backwards compat and single-piece swaps:
-function swapPieces(a, b) { swapGroup(a, b); }
 
 // =====================================================
 //  Score & Stars
@@ -854,10 +883,11 @@ function showClearOverlay() {
   scoreEl.textContent = '0';
   let current = 0;
   const steps = 28, interval = 700 / steps;
-  const timer = setInterval(() => {
+  clearInterval(State.scoreInterval);
+  State.scoreInterval = setInterval(() => {
     current = Math.min(current + score / steps, score);
     scoreEl.textContent = Math.round(current).toLocaleString('ja-JP');
-    if (current >= score) clearInterval(timer);
+    if (current >= score) { clearInterval(State.scoreInterval); State.scoreInterval = null; }
   }, interval);
 
   // --- Breakdown ---
@@ -979,6 +1009,62 @@ function showPreviewThenStart(imageUrl, gridSize) {
 }
 
 // =====================================================
+//  Drag/Touch Helpers
+// =====================================================
+function getGroupPositions(gid) {
+  return State.pieces
+    .map((p, i) => (p.groupId === gid ? i : -1))
+    .filter(i => i >= 0);
+}
+
+function validateGroupPlacement(groupPositions, srcPos, dstPos) {
+  const n = State.gridSize;
+  const offset = dstPos - srcPos;
+  const anchorRow = Math.floor(srcPos / n);
+  const dstRow = Math.floor(dstPos / n);
+  const targetPositions = [];
+  for (const p of groupPositions) {
+    const np = p + offset;
+    if (np < 0 || np >= n * n) return null;
+    if (Math.floor(np / n) !== dstRow + (Math.floor(p / n) - anchorRow)) return null;
+    targetPositions.push(np);
+  }
+  return targetPositions;
+}
+
+function buildGroupGhost(groupPositions, boardRect, extraStyles) {
+  const n = State.gridSize;
+  const pieceW = boardRect.width / n;
+  const pieceH = boardRect.height / n;
+  const rows = groupPositions.map(p => Math.floor(p / n));
+  const cols = groupPositions.map(p => p % n);
+  const minRow = Math.min(...rows), maxRow = Math.max(...rows);
+  const minCol = Math.min(...cols), maxCol = Math.max(...cols);
+  const ghostW = (maxCol - minCol + 1) * pieceW;
+  const ghostH = (maxRow - minRow + 1) * pieceH;
+  const ghost = document.createElement('div');
+  ghost.style.cssText = `position:fixed;pointer-events:none;overflow:hidden;border-radius:4px;width:${ghostW}px;height:${ghostH}px;${extraStyles}`;
+  groupPositions.forEach(p => {
+    const pr = Math.floor(p / n) - minRow;
+    const pc = (p % n) - minCol;
+    const ci = State.pieces[p].correctIndex;
+    const seg = document.createElement('div');
+    seg.style.cssText = `position:absolute;left:${pc * pieceW}px;top:${pr * pieceH}px;width:${pieceW}px;height:${pieceH}px;`;
+    seg.style.backgroundImage    = `url(${State.imageUrl})`;
+    seg.style.backgroundSize     = `${boardRect.width}px ${boardRect.height}px`;
+    seg.style.backgroundPosition = `${-(ci % n) * pieceW}px ${-Math.floor(ci / n) * pieceH}px`;
+    seg.style.backgroundRepeat   = 'no-repeat';
+    ghost.appendChild(seg);
+  });
+  return { ghost, ghostW, ghostH, minRow, minCol, pieceW, pieceH };
+}
+
+function clearDragClasses() {
+  document.getElementById('board').querySelectorAll('.dragging, .drag-over')
+    .forEach(el => el.classList.remove('dragging', 'drag-over'));
+}
+
+// =====================================================
 //  Board Events (D&D + Touch)
 // =====================================================
 let _boardEventsInitialized = false;
@@ -1000,64 +1086,25 @@ function initBoardEvents() {
     if (!piece) return;
     const srcPos = parseInt(piece.dataset.pos);
     State.dragSrcPos = srcPos;
+    State.dragGroupPositions = getGroupPositions(State.pieces[srcPos].groupId);
 
-    // Determine group
-    const gid = State.pieces[srcPos].groupId;
-    State.dragGroupPositions = State.pieces
-      .map((p, i) => (p.groupId === gid ? i : -1))
-      .filter(i => i >= 0);
-
-    // --- Build composite ghost image for the whole group ---
-    const n = State.gridSize;
     const boardRect = board.getBoundingClientRect();
-    const pieceW = boardRect.width  / n;
-    const pieceH = boardRect.height / n;
-
-    const groupRows = State.dragGroupPositions.map(p => Math.floor(p / n));
-    const groupCols = State.dragGroupPositions.map(p => p % n);
-    const minRow = Math.min(...groupRows), maxRow = Math.max(...groupRows);
-    const minCol = Math.min(...groupCols), maxCol = Math.max(...groupCols);
-    const ghostW = (maxCol - minCol + 1) * pieceW;
-    const ghostH = (maxRow - minRow + 1) * pieceH;
-
-    const ghost = document.createElement('div');
-    ghost.style.cssText = `position:fixed;left:-9999px;top:-9999px;
-      width:${ghostW}px;height:${ghostH}px;
-      pointer-events:none;overflow:hidden;border-radius:4px;`;
-
-    State.dragGroupPositions.forEach(p => {
-      const pr = Math.floor(p / n) - minRow;
-      const pc = (p % n) - minCol;
-      const ci = State.pieces[p].correctIndex;
-      const seg = document.createElement('div');
-      seg.style.cssText = `position:absolute;
-        left:${pc * pieceW}px;top:${pr * pieceH}px;
-        width:${pieceW}px;height:${pieceH}px;`;
-      seg.style.backgroundImage    = `url(${State.imageUrl})`;
-      seg.style.backgroundSize     = `${boardRect.width}px ${boardRect.height}px`;
-      seg.style.backgroundPosition = `${-(ci % n) * pieceW}px ${-Math.floor(ci / n) * pieceH}px`;
-      seg.style.backgroundRepeat   = 'no-repeat';
-      seg.style.backgroundOrigin   = 'border-box';
-      ghost.appendChild(seg);
-    });
-
+    const { ghost, minRow, minCol, pieceW, pieceH } =
+      buildGroupGhost(State.dragGroupPositions, boardRect, 'left:-9999px;top:-9999px;');
     document.body.appendChild(ghost);
 
-    // Cursor offset within ghost: where the grabbed piece sits inside the group
+    const n = State.gridSize;
     const srcCol = (srcPos % n) - minCol;
     const srcRow = Math.floor(srcPos / n) - minRow;
     const pieceRect = piece.getBoundingClientRect();
-    const ox = srcCol * pieceW + (e.clientX - pieceRect.left);
-    const oy = srcRow * pieceH + (e.clientY - pieceRect.top);
-    e.dataTransfer.setDragImage(ghost, ox, oy);
-
-    // Browser captures the drag image synchronously; remove after one tick
+    e.dataTransfer.setDragImage(ghost,
+      srcCol * pieceW + (e.clientX - pieceRect.left),
+      srcRow * pieceH + (e.clientY - pieceRect.top));
     setTimeout(() => ghost.remove(), 0);
 
-    // Mark group pieces as dragging
+    const dragSet = new Set(State.dragGroupPositions);
     board.querySelectorAll('.piece').forEach(el => {
-      if (State.dragGroupPositions.includes(parseInt(el.dataset.pos)))
-        el.classList.add('dragging');
+      if (dragSet.has(parseInt(el.dataset.pos))) el.classList.add('dragging');
     });
 
     e.dataTransfer.effectAllowed = 'move';
@@ -1069,29 +1116,13 @@ function initBoardEvents() {
     e.dataTransfer.dropEffect = 'move';
     board.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
     const piece = e.target.closest('.piece');
-    if (!piece) return;
+    if (!piece || State.dragSrcPos === null) return;
     const dstPos = parseInt(piece.dataset.pos);
-    if (State.dragSrcPos === null) return;
-
-    // Validate group placement and highlight target cells
-    const offset = dstPos - State.dragSrcPos;
-    const n = State.gridSize;
-    let valid = true;
-    const targetPositions = [];
-    for (const p of State.dragGroupPositions) {
-      const np = p + offset;
-      if (np < 0 || np >= n * n) { valid = false; break; }
-      const srcRow = Math.floor(p / n), anchorRow = Math.floor(State.dragSrcPos / n);
-      const dstRow = Math.floor(dstPos / n);
-      if (Math.floor(np / n) !== dstRow + (srcRow - anchorRow)) { valid = false; break; }
-      targetPositions.push(np);
-    }
-    if (!valid) return;
-
+    const targetPositions = validateGroupPlacement(State.dragGroupPositions, State.dragSrcPos, dstPos);
+    if (!targetPositions) return;
+    const targetSet = new Set(targetPositions);
     board.querySelectorAll('.piece').forEach(el => {
-      if (targetPositions.includes(parseInt(el.dataset.pos))) {
-        el.classList.add('drag-over');
-      }
+      if (targetSet.has(parseInt(el.dataset.pos))) el.classList.add('drag-over');
     });
   });
 
@@ -1108,11 +1139,11 @@ function initBoardEvents() {
     swapGroup(State.dragSrcPos, dstPos);
     State.dragSrcPos = null;
     State.dragGroupPositions = [];
-    board.querySelectorAll('.dragging, .drag-over').forEach(el => el.classList.remove('dragging', 'drag-over'));
+    clearDragClasses();
   });
 
   board.addEventListener('dragend', () => {
-    board.querySelectorAll('.dragging, .drag-over').forEach(el => el.classList.remove('dragging', 'drag-over'));
+    clearDragClasses();
     State.dragSrcPos = null;
     State.dragGroupPositions = [];
   });
@@ -1129,63 +1160,21 @@ function initBoardEvents() {
     e.preventDefault();
 
     touchSrcPos = parseInt(piece.dataset.pos);
-    const gid = State.pieces[touchSrcPos].groupId;
-    touchGroupPositions = State.pieces
-      .map((p, i) => (p.groupId === gid ? i : -1))
-      .filter(i => i >= 0);
+    touchGroupPositions = getGroupPositions(State.pieces[touchSrcPos].groupId);
 
-    // Build composite ghost of all group pieces
-    const n = State.gridSize;
-    const board = document.getElementById('board');
     const boardRect = board.getBoundingClientRect();
-    const pieceW = boardRect.width  / n;
-    const pieceH = boardRect.height / n;
-
-    // Group bounding box in grid coords
-    const groupRows = touchGroupPositions.map(p => Math.floor(p / n));
-    const groupCols = touchGroupPositions.map(p => p % n);
-    const minRow = Math.min(...groupRows), maxRow = Math.max(...groupRows);
-    const minCol = Math.min(...groupCols), maxCol = Math.max(...groupCols);
-    const ghostW = (maxCol - minCol + 1) * pieceW;
-    const ghostH = (maxRow - minRow + 1) * pieceH;
-
-    const ghost = document.createElement('div');
-    ghost.style.cssText = `
-      position:fixed; pointer-events:none; z-index:999;
-      width:${ghostW}px; height:${ghostH}px;
-      opacity:0.75; transform:scale(1.08);
-      border-radius:4px; overflow:hidden;
-    `;
-
-    touchGroupPositions.forEach(p => {
-      const pr = Math.floor(p / n) - minRow;
-      const pc = (p % n) - minCol;
-      const seg = document.createElement('div');
-      seg.style.cssText = `
-        position:absolute;
-        left:${pc * pieceW}px; top:${pr * pieceH}px;
-        width:${pieceW}px; height:${pieceH}px;
-      `;
-      const ci = State.pieces[p].correctIndex;
-      seg.style.backgroundImage    = `url(${State.imageUrl})`;
-      seg.style.backgroundSize     = `${boardRect.width}px ${boardRect.height}px`;
-      seg.style.backgroundPosition = `${-(ci % n) * pieceW}px ${-Math.floor(ci / n) * pieceH}px`;
-      seg.style.backgroundRepeat   = 'no-repeat';
-      seg.style.backgroundOrigin   = 'border-box';
-      ghost.appendChild(seg);
-    });
-
+    const { ghost, ghostW, ghostH } =
+      buildGroupGhost(touchGroupPositions, boardRect, 'z-index:999;opacity:0.75;transform:scale(1.08);');
     document.body.appendChild(ghost);
     touchGhost = ghost;
 
-    // Center ghost on finger
     const touch = e.touches[0];
     ghost.style.left = (touch.clientX - ghostW / 2) + 'px';
     ghost.style.top  = (touch.clientY - ghostH / 2) + 'px';
 
+    const dragSet = new Set(touchGroupPositions);
     board.querySelectorAll('.piece').forEach(el => {
-      if (touchGroupPositions.includes(parseInt(el.dataset.pos)))
-        el.classList.add('dragging');
+      if (dragSet.has(parseInt(el.dataset.pos))) el.classList.add('dragging');
     });
   }, { passive: false });
 
@@ -1193,14 +1182,12 @@ function initBoardEvents() {
     if (touchSrcPos === null) return;
     e.preventDefault();
     const touch = e.touches[0];
-    const n = State.gridSize;
 
     if (touchGhost) {
       touchGhost.style.left = (touch.clientX - touchGhost.offsetWidth / 2) + 'px';
       touchGhost.style.top  = (touch.clientY - touchGhost.offsetHeight / 2) + 'px';
     }
 
-    // Detect hover cell
     if (touchGhost) touchGhost.style.display = 'none';
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (touchGhost) touchGhost.style.display = '';
@@ -1210,24 +1197,12 @@ function initBoardEvents() {
     if (!hoverPiece) { touchHoverPos = null; return; }
 
     const dstPos = parseInt(hoverPiece.dataset.pos);
-    const offset = dstPos - touchSrcPos;
-    let valid = true;
-    const targetPositions = [];
-
-    for (const p of touchGroupPositions) {
-      const np = p + offset;
-      if (np < 0 || np >= n * n) { valid = false; break; }
-      const srcRow = Math.floor(p / n), anchorRow = Math.floor(touchSrcPos / n);
-      const dstRow = Math.floor(dstPos / n);
-      if (Math.floor(np / n) !== dstRow + (srcRow - anchorRow)) { valid = false; break; }
-      targetPositions.push(np);
-    }
-
-    if (valid) {
+    const targetPositions = validateGroupPlacement(touchGroupPositions, touchSrcPos, dstPos);
+    if (targetPositions) {
       touchHoverPos = dstPos;
+      const targetSet = new Set(targetPositions);
       board.querySelectorAll('.piece').forEach(el => {
-        if (targetPositions.includes(parseInt(el.dataset.pos)))
-          el.classList.add('drag-over');
+        if (targetSet.has(parseInt(el.dataset.pos))) el.classList.add('drag-over');
       });
     } else {
       touchHoverPos = null;
@@ -1237,9 +1212,7 @@ function initBoardEvents() {
   board.addEventListener('touchend', e => {
     e.preventDefault();
     if (touchGhost) { touchGhost.remove(); touchGhost = null; }
-    board.querySelectorAll('.dragging, .drag-over').forEach(el =>
-      el.classList.remove('dragging', 'drag-over'));
-
+    clearDragClasses();
     if (touchSrcPos !== null && touchHoverPos !== null) {
       swapGroup(touchSrcPos, touchHoverPos);
     }
@@ -1266,12 +1239,12 @@ function initResizeObserver() {
 //  Setup Screen
 // =====================================================
 const examplePrompts = {
-  '🌸 桜と富士山': 'Mount Fuji cherry blossom',
-  '🌊 海と灯台':   'lighthouse sea coast',
-  '🏙️ 夜の都市':   'Tokyo night city',
-  '🦊 森の狐':     'red fox forest',
-  '🌌 銀河と星空': 'milky way night sky',
-  '🐉 ドラゴン':   'dragon statue',
+  '🦚 孔雀':     'peacock',
+  '🐠 珊瑚礁':   'coral reef',
+  '🎆 花火':     'fireworks',
+  '🦜 熱帯の鳥': 'tropical parrot',
+  '🌈 オーロラ': 'aurora borealis',
+  '🍁 紅葉の森': 'autumn leaves',
 };
 
 document.querySelectorAll('.example-chip').forEach(chip => {
@@ -1357,7 +1330,7 @@ document.getElementById('board').addEventListener('contextmenu', e => e.preventD
 //  Confetti
 // =====================================================
 function showConfetti() {
-  const colors = ['#fbbf24','#f472b6','#a78bfa','#60a5fa','#34d399','#fb923c'];
+  const colors = ['#C8401A','#D4720A','#2A6640','#1A4A80','#8A3A70','#3A5E8A'];
   for (let i = 0; i < 50; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
@@ -1369,7 +1342,7 @@ function showConfetti() {
     el.style.width = (6 + Math.random() * 6) + 'px';
     el.style.height = (8 + Math.random() * 8) + 'px';
     document.body.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
+    el.addEventListener('animationend', () => el.remove(), { once: true });
   }
 }
 
