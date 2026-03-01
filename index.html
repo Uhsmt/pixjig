@@ -1409,7 +1409,7 @@ document.getElementById('btn-start').addEventListener('click', async () => {
   const errorEl = document.getElementById('setup-error');
   errorEl.classList.remove('active');
 
-  if (!prompt) {
+  if (!prompt && !State.presetImage) {
     errorEl.textContent = t('errRequired');
     errorEl.classList.add('active');
     return;
