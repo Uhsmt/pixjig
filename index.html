@@ -120,6 +120,7 @@
     font-family: 'DM Sans', sans-serif;
   }
   .example-chip:hover { border-color: var(--text); color: var(--text); background: var(--surface); }
+  .example-chip.selected { background: var(--text); border-color: var(--text); color: #fff; }
 
   /* ===== Loading ===== */
   #screen-loading { gap: 2rem; animation: fadeIn 0.3s ease; }
@@ -557,7 +558,7 @@
 // =====================================================
 const STRINGS = {
   ja: {
-    promptPlaceholder: 'キーワードを入力（例: red fox forest, Tokyo night）',
+    promptPlaceholder: 'または独自のキーワードで検索（例: red fox, Tokyo night）',
     pieces: n => `${n}ピース`,
     btnStart: 'スタート',
     loadingText: '画像を検索中...',
@@ -586,7 +587,7 @@ const STRINGS = {
     chips: ['🌸 花畑', '🦚 孔雀', '🐠 珊瑚礁', '🎆 花火', '🦜 熱帯の鳥', '🌈 オーロラ', '🍁 紅葉の森'],
   },
   en: {
-    promptPlaceholder: 'Enter a keyword (e.g. red fox forest, Tokyo night)',
+    promptPlaceholder: 'or search your own keyword (e.g. red fox, Tokyo night)',
     pieces: n => `${n} pcs`,
     btnStart: 'Start',
     loadingText: 'Searching...',
@@ -1378,14 +1379,19 @@ function initResizeObserver() {
 // =====================================================
 //  Setup Screen
 // =====================================================
+function selectChip(chip) {
+  document.querySelectorAll('.example-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  document.getElementById('prompt-input').value = '';
+  State.presetImage = chip.dataset.preset || null;
+}
+
 document.querySelectorAll('.example-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.getElementById('prompt-input').value = chip.dataset.query;
-    State.presetImage = chip.dataset.preset || null;
-  });
+  chip.addEventListener('click', () => selectChip(chip));
 });
 
 document.getElementById('prompt-input').addEventListener('input', () => {
+  document.querySelectorAll('.example-chip').forEach(c => c.classList.remove('selected'));
   State.presetImage = null;
 });
 
@@ -1555,8 +1561,7 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
 });
 
 applyLang(currentLang);
-document.getElementById('prompt-input').value = 'flower field';
-State.presetImage = 'images/flower-field.png';
+selectChip(document.querySelector('.example-chip'));
 </script>
 </body>
 </html>
