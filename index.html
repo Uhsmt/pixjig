@@ -453,13 +453,13 @@
   <h1 class="title">PixJig</h1>
 
   <div class="examples" id="examples">
-    <span class="example-chip" data-query="flower field">🌸 花畑</span>
-    <span class="example-chip" data-query="peacock">🦚 孔雀</span>
-    <span class="example-chip" data-query="coral reef">🐠 珊瑚礁</span>
-    <span class="example-chip" data-query="fireworks">🎆 花火</span>
-    <span class="example-chip" data-query="tropical parrot">🦜 熱帯の鳥</span>
-    <span class="example-chip" data-query="aurora borealis">🌈 オーロラ</span>
-    <span class="example-chip" data-query="autumn leaves">🍁 紅葉の森</span>
+    <span class="example-chip" data-query="flower field"    data-preset="images/flower-field.png">🌸 花畑</span>
+    <span class="example-chip" data-query="peacock"         data-preset="images/peacock.png">🦚 孔雀</span>
+    <span class="example-chip" data-query="coral reef"      data-preset="images/coral-reef.png">🐠 珊瑚礁</span>
+    <span class="example-chip" data-query="fireworks"       data-preset="images/fireworks.png">🎆 花火</span>
+    <span class="example-chip" data-query="tropical parrot" data-preset="images/tropical-parrot.png">🦜 熱帯の鳥</span>
+    <span class="example-chip" data-query="aurora borealis" data-preset="images/aurora.png">🌈 オーロラ</span>
+    <span class="example-chip" data-query="autumn leaves"   data-preset="images/autumn-leaves.png">🍁 紅葉の森</span>
   </div>
 
   <textarea id="prompt-input" placeholder="キーワードを入力（例: red fox forest, Tokyo night）"></textarea>
@@ -636,6 +636,7 @@ const State = {
   dragSrcPos: null,
   dragGroupPositions: [],   // all positions in the dragged group
   imageAspect: 1,           // width / height of source image
+  presetImage: null,        // path to preset image (null = use Wikimedia search)
 };
 
 // =====================================================
@@ -1380,7 +1381,12 @@ function initResizeObserver() {
 document.querySelectorAll('.example-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     document.getElementById('prompt-input').value = chip.dataset.query;
+    State.presetImage = chip.dataset.preset || null;
   });
+});
+
+document.getElementById('prompt-input').addEventListener('input', () => {
+  State.presetImage = null;
 });
 
 document.querySelectorAll('.diff-btn').forEach(btn => {
@@ -1405,18 +1411,24 @@ document.getElementById('btn-start').addEventListener('click', async () => {
 
   State.prompt = prompt;
   document.getElementById('btn-start').disabled = true;
-  showScreen('screen-loading');
 
-  try {
-    const { url, aspect } = await generateImage(prompt);
-    State.imageAspect = aspect;
-    showPreviewThenStart(url, State.gridSize);
-  } catch (err) {
-    showScreen('screen-setup');
-    errorEl.textContent = err.message || t('errFail');
-    errorEl.classList.add('active');
-  } finally {
+  if (State.presetImage) {
+    State.imageAspect = 1;
+    showPreviewThenStart(State.presetImage, State.gridSize);
     document.getElementById('btn-start').disabled = false;
+  } else {
+    showScreen('screen-loading');
+    try {
+      const { url, aspect } = await generateImage(prompt);
+      State.imageAspect = aspect;
+      showPreviewThenStart(url, State.gridSize);
+    } catch (err) {
+      showScreen('screen-setup');
+      errorEl.textContent = err.message || t('errFail');
+      errorEl.classList.add('active');
+    } finally {
+      document.getElementById('btn-start').disabled = false;
+    }
   }
 });
 
@@ -1544,6 +1556,7 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
 
 applyLang(currentLang);
 document.getElementById('prompt-input').value = 'flower field';
+State.presetImage = 'images/flower-field.png';
 </script>
 </body>
 </html>
