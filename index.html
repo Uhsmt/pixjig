@@ -404,6 +404,16 @@
     animation: confettiFall linear forwards;
   }
 
+  /* ===== Lang Toggle ===== */
+  #lang-toggle {
+    position: fixed; top: 0.7rem; right: 0.7rem; z-index: 500;
+    padding: 0.22rem 0.5rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700;
+    color: var(--text-mid); cursor: pointer; transition: all 0.12s; letter-spacing: 0.06em;
+  }
+  #lang-toggle:hover { border-color: var(--text); color: var(--text); }
+
   @media (max-width: 480px) {
     .screen { padding: 1rem; }
     #screen-game { gap: 0.45rem; }
@@ -420,18 +430,20 @@
 </head>
 <body>
 
+<button id="lang-toggle">EN</button>
+
 <!-- Setup Screen -->
 <div id="screen-setup" class="screen active">
   <h1 class="title">PixJig</h1>
 
   <div class="examples" id="examples">
-    <span class="example-chip">🌸 花畑</span>
-    <span class="example-chip">🦚 孔雀</span>
-    <span class="example-chip">🐠 珊瑚礁</span>
-    <span class="example-chip">🎆 花火</span>
-    <span class="example-chip">🦜 熱帯の鳥</span>
-    <span class="example-chip">🌈 オーロラ</span>
-    <span class="example-chip">🍁 紅葉の森</span>
+    <span class="example-chip" data-query="flower field">🌸 花畑</span>
+    <span class="example-chip" data-query="peacock">🦚 孔雀</span>
+    <span class="example-chip" data-query="coral reef">🐠 珊瑚礁</span>
+    <span class="example-chip" data-query="fireworks">🎆 花火</span>
+    <span class="example-chip" data-query="tropical parrot">🦜 熱帯の鳥</span>
+    <span class="example-chip" data-query="aurora borealis">🌈 オーロラ</span>
+    <span class="example-chip" data-query="autumn leaves">🍁 紅葉の森</span>
   </div>
 
   <textarea id="prompt-input" placeholder="キーワードを入力（例: red fox forest, Tokyo night）"></textarea>
@@ -524,6 +536,72 @@
 </div>
 
 <script>
+// =====================================================
+//  i18n
+// =====================================================
+const STRINGS = {
+  ja: {
+    promptPlaceholder: 'キーワードを入力（例: red fox forest, Tokyo night）',
+    pieces: n => `${n}ピース`,
+    btnStart: 'スタート',
+    loadingText: '画像を検索中...',
+    loadingSub: 'Wikimedia Commons から関連写真を取得しています',
+    statMoves: '手数', statTime: 'タイム',
+    btnShuffle: 'シャッフル', btnBack: '← 戻る',
+    previewMsg: '画像を覚えよう！',
+    scoreLabel: 'スコア',
+    btnRetry: '同じ画像でもう一度', btnNewGame: '新しいゲーム',
+    bdMoves: '手数', bdTime: 'タイム',
+    bdParMoves: par => `基準 ${par}手　60%`,
+    bdParTime: par => `基準 ${par}秒　40%`,
+    bdMoveVal: n => `${n}手`, bdTimeVal: s => `${s}秒`,
+    hsHeading: 'ベストスコア',
+    hsScore: 'スコア', hsMoves: '手数', hsTime: 'タイム',
+    hsMoveVal: n => `${n}手`,
+    clearHs: '自己ベスト',
+    errRequired: 'プロンプトを入力してください',
+    errFail: '画像生成に失敗しました。もう一度試してください。',
+    errSearch: '画像の検索に失敗しました',
+    errNotFound: kw => `「${kw}」に関する画像が見つかりませんでした。別のキーワードを試してください。`,
+    errInfo: '画像情報の取得に失敗しました',
+    errUrl: '画像URLが取得できませんでした',
+    errTimeout: '画像の読み込みがタイムアウトしました',
+    errNetTimeout: '画像の取得がタイムアウトしました（15秒）',
+    chips: ['🌸 花畑', '🦚 孔雀', '🐠 珊瑚礁', '🎆 花火', '🦜 熱帯の鳥', '🌈 オーロラ', '🍁 紅葉の森'],
+  },
+  en: {
+    promptPlaceholder: 'Enter a keyword (e.g. red fox forest, Tokyo night)',
+    pieces: n => `${n} pcs`,
+    btnStart: 'Start',
+    loadingText: 'Searching...',
+    loadingSub: 'Fetching photos from Wikimedia Commons',
+    statMoves: 'Moves', statTime: 'Time',
+    btnShuffle: 'Shuffle', btnBack: '← Back',
+    previewMsg: 'Memorize it!',
+    scoreLabel: 'Score',
+    btnRetry: 'Play again', btnNewGame: 'New game',
+    bdMoves: 'Moves', bdTime: 'Time',
+    bdParMoves: par => `par ${par}　60%`,
+    bdParTime: par => `par ${par}s　40%`,
+    bdMoveVal: n => `${n}`, bdTimeVal: s => `${s}s`,
+    hsHeading: 'Best Score',
+    hsScore: 'Score', hsMoves: 'Moves', hsTime: 'Time',
+    hsMoveVal: n => `${n}`,
+    clearHs: 'Best',
+    errRequired: 'Please enter a keyword',
+    errFail: 'Failed to load image. Please try again.',
+    errSearch: 'Search failed',
+    errNotFound: kw => `No images found for "${kw}". Try another keyword.`,
+    errInfo: 'Failed to get image info',
+    errUrl: 'Could not get image URL',
+    errTimeout: 'Image load timed out',
+    errNetTimeout: 'Request timed out (15s)',
+    chips: ['🌸 Flower Field', '🦚 Peacock', '🐠 Coral Reef', '🎆 Fireworks', '🦜 Tropical Parrot', '🌈 Aurora', '🍁 Autumn Leaves'],
+  },
+};
+let currentLang = localStorage.getItem('pixjig_lang') || 'ja';
+const t = key => STRINGS[currentLang][key];
+
 // =====================================================
 //  State
 // =====================================================
@@ -629,7 +707,7 @@ async function generateImage(prompt) {
       `&srsearch=${q}&srnamespace=6&srlimit=20&format=json&origin=*`;
 
     const searchRes = await fetch(searchUrl, { signal: controller.signal });
-    if (!searchRes.ok) throw new Error('画像の検索に失敗しました');
+    if (!searchRes.ok) throw new Error(t('errSearch'));
     const searchData = await searchRes.json();
 
     // JPEG / PNG / WebP に絞り込む
@@ -637,7 +715,7 @@ async function generateImage(prompt) {
       .filter(r => /\.(jpe?g|png|webp)$/i.test(r.title));
 
     if (results.length === 0) {
-      throw new Error(`「${keyword}」に関する画像が見つかりませんでした。別のキーワードを試してください。`);
+      throw new Error(STRINGS[currentLang].errNotFound(keyword));
     }
 
     // 上位10件からランダムに1枚選ぶ
@@ -650,14 +728,14 @@ async function generateImage(prompt) {
       `&prop=imageinfo&iiprop=url&iiurlwidth=512&format=json&origin=*`;
 
     const infoRes = await fetch(infoUrl, { signal: controller.signal });
-    if (!infoRes.ok) throw new Error('画像情報の取得に失敗しました');
+    if (!infoRes.ok) throw new Error(t('errInfo'));
     const infoData = await infoRes.json();
 
     const pages = infoData.query?.pages || {};
     const page  = Object.values(pages)[0];
     const imageUrl = page?.imageinfo?.[0]?.thumburl || page?.imageinfo?.[0]?.url;
 
-    if (!imageUrl) throw new Error('画像URLが取得できませんでした');
+    if (!imageUrl) throw new Error(t('errUrl'));
 
     clearTimeout(timeoutId);
 
@@ -666,16 +744,16 @@ async function generateImage(prompt) {
       const img = new Image();
       const imgTimeout = setTimeout(() => {
         img.src = '';
-        reject(new Error('画像の読み込みがタイムアウトしました'));
+        reject(new Error(t('errTimeout')));
       }, 10000);
       img.onload  = () => { clearTimeout(imgTimeout); resolve({ url: imageUrl, aspect: (img.naturalWidth / img.naturalHeight) || 1 }); };
-      img.onerror = () => { clearTimeout(imgTimeout); reject(new Error('画像の読み込みに失敗しました。もう一度試してください。')); };
+      img.onerror = () => { clearTimeout(imgTimeout); reject(new Error(t('errFail'))); };
       img.src = imageUrl;
     });
 
   } catch (e) {
     clearTimeout(timeoutId);
-    if (e.name === 'AbortError') throw new Error('画像の取得がタイムアウトしました（15秒）');
+    if (e.name === 'AbortError') throw new Error(t('errNetTimeout'));
     throw e;
   }
 }
@@ -939,20 +1017,21 @@ function showClearOverlay() {
   function multColor(r) {
     return r >= 1.5 ? '#34d399' : r >= 1.0 ? '#86efac' : r >= 0.5 ? '#fbbf24' : '#fb923c';
   }
+  const S = STRINGS[currentLang];
   document.getElementById('score-breakdown').innerHTML = `
     <div class="bd-row">
-      <span class="bd-label">手数</span>
-      <span class="bd-val">${State.moveCount}手</span>
+      <span class="bd-label">${S.bdMoves}</span>
+      <span class="bd-val">${S.bdMoveVal(State.moveCount)}</span>
       <span class="bd-arr">→</span>
       <span class="bd-mult" style="color:${multColor(moveRatio)}">×${moveRatio.toFixed(2)}</span>
-      <span class="bd-par">基準 ${parMoves}手　60%</span>
+      <span class="bd-par">${S.bdParMoves(parMoves)}</span>
     </div>
     <div class="bd-row">
-      <span class="bd-label">タイム</span>
-      <span class="bd-val">${Math.round(secs)}秒</span>
+      <span class="bd-label">${S.bdTime}</span>
+      <span class="bd-val">${S.bdTimeVal(Math.round(secs))}</span>
       <span class="bd-arr">→</span>
       <span class="bd-mult" style="color:${multColor(timeRatio)}">×${timeRatio.toFixed(2)}</span>
-      <span class="bd-par">基準 ${parSecs}秒　40%</span>
+      <span class="bd-par">${S.bdParTime(parSecs)}</span>
     </div>
     <div class="bd-formula">
       ${base.toLocaleString('ja-JP')} × <strong style="color:${multColor(eff)}">${eff.toFixed(2)}</strong>
@@ -973,7 +1052,7 @@ function showClearOverlay() {
   }
   const best = HighScore.get(State.gridSize);
   hsRowEl.innerHTML = best
-    ? `自己ベスト <span class="clear-hs-val">${best.score.toLocaleString('ja-JP')}</span><span style="color:#4a4a70">／</span>${best.moves}手<span style="color:#4a4a70">／</span>${formatTime(best.ms)}`
+    ? `${S.clearHs} <span class="clear-hs-val">${best.score.toLocaleString('ja-JP')}</span><span style="color:#4a4a70">／</span>${S.hsMoveVal(best.moves)}<span style="color:#4a4a70">／</span>${formatTime(best.ms)}`
     : '';
 
   document.getElementById('overlay-clear').classList.add('active');
@@ -1282,20 +1361,9 @@ function initResizeObserver() {
 // =====================================================
 //  Setup Screen
 // =====================================================
-const examplePrompts = {
-  '🌸 花畑':     'flower field',
-  '🦚 孔雀':     'peacock',
-  '🐠 珊瑚礁':   'coral reef',
-  '🎆 花火':     'fireworks',
-  '🦜 熱帯の鳥': 'tropical parrot',
-  '🌈 オーロラ': 'aurora borealis',
-  '🍁 紅葉の森': 'autumn leaves',
-};
-
 document.querySelectorAll('.example-chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    const key = chip.textContent.trim();
-    document.getElementById('prompt-input').value = examplePrompts[key] || key;
+    document.getElementById('prompt-input').value = chip.dataset.query;
   });
 });
 
@@ -1314,7 +1382,7 @@ document.getElementById('btn-start').addEventListener('click', async () => {
   errorEl.classList.remove('active');
 
   if (!prompt) {
-    errorEl.textContent = 'プロンプトを入力してください';
+    errorEl.textContent = t('errRequired');
     errorEl.classList.add('active');
     return;
   }
@@ -1329,7 +1397,7 @@ document.getElementById('btn-start').addEventListener('click', async () => {
     showPreviewThenStart(url, State.gridSize);
   } catch (err) {
     showScreen('screen-setup');
-    errorEl.textContent = err.message || '画像生成に失敗しました。もう一度試してください。';
+    errorEl.textContent = err.message || t('errFail');
     errorEl.classList.add('active');
   } finally {
     document.getElementById('btn-start').disabled = false;
@@ -1408,16 +1476,57 @@ function updateHsDisplay() {
   if (!el) return;
   const best = HighScore.get(State.gridSize);
   if (!best) { el.innerHTML = ''; return; }
+  const Sh = STRINGS[currentLang];
   el.innerHTML = `
-    <div class="hs-heading">ベストスコア</div>
+    <div class="hs-heading">${Sh.hsHeading}</div>
     <div class="hs-items">
-      <div class="hs-item"><span class="hs-item-label">スコア</span><span class="hs-item-val">${best.score.toLocaleString('ja-JP')}</span></div>
-      <div class="hs-item"><span class="hs-item-label">手数</span><span class="hs-item-val">${best.moves}</span></div>
-      <div class="hs-item"><span class="hs-item-label">タイム</span><span class="hs-item-val">${formatTime(best.ms)}</span></div>
+      <div class="hs-item"><span class="hs-item-label">${Sh.hsScore}</span><span class="hs-item-val">${best.score.toLocaleString('ja-JP')}</span></div>
+      <div class="hs-item"><span class="hs-item-label">${Sh.hsMoves}</span><span class="hs-item-val">${best.moves}</span></div>
+      <div class="hs-item"><span class="hs-item-label">${Sh.hsTime}</span><span class="hs-item-val">${formatTime(best.ms)}</span></div>
     </div>
   `;
 }
-updateHsDisplay();
+// =====================================================
+//  Language
+// =====================================================
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('pixjig_lang', lang);
+  const S = STRINGS[lang];
+
+  document.getElementById('prompt-input').placeholder = S.promptPlaceholder;
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    const size = parseInt(btn.dataset.size);
+    btn.innerHTML = `${size}×${size}<br><small>${S.pieces(size * size)}</small>`;
+  });
+  document.getElementById('btn-start').textContent = S.btnStart;
+  document.querySelector('.loading-text').textContent = S.loadingText;
+  document.querySelector('.loading-sub').textContent = S.loadingSub;
+  const statLabels = document.querySelectorAll('.stat-label');
+  statLabels[0].textContent = S.statMoves;
+  statLabels[1].textContent = S.statTime;
+  document.getElementById('btn-shuffle').textContent = S.btnShuffle;
+  document.getElementById('btn-back').textContent = S.btnBack;
+  document.querySelector('.preview-count-msg').textContent = S.previewMsg;
+  document.querySelector('.clear-score-label').textContent = S.scoreLabel;
+  const clearStatLabels = document.querySelectorAll('.clear-stat-label');
+  clearStatLabels[0].textContent = S.statMoves;
+  clearStatLabels[1].textContent = S.statTime;
+  document.getElementById('btn-retry-same').textContent = S.btnRetry;
+  document.getElementById('btn-new-game').textContent = S.btnNewGame;
+  document.querySelectorAll('.example-chip').forEach((chip, i) => {
+    if (S.chips[i]) chip.textContent = S.chips[i];
+  });
+  document.getElementById('lang-toggle').textContent = lang === 'ja' ? 'EN' : 'JP';
+
+  updateHsDisplay();
+}
+
+document.getElementById('lang-toggle').addEventListener('click', () => {
+  applyLang(currentLang === 'ja' ? 'en' : 'ja');
+});
+
+applyLang(currentLang);
 document.getElementById('prompt-input').value = 'flower field';
 </script>
 </body>
