@@ -34,15 +34,13 @@
     background-clip: text;
     letter-spacing: -0.02em;
   }
-  .subtitle { font-size: 0.85rem; color: #8888aa; text-align: center; margin-top: -0.5rem; }
-
-  label { font-size: 0.8rem; font-weight: 600; color: #a0a0c0; text-transform: uppercase;
+  label {font-size: 0.8rem; font-weight: 600; color: #a0a0c0; text-transform: uppercase;
           letter-spacing: 0.08em; align-self: flex-start; width: 100%; }
 
   textarea {
-    width: 100%; height: 90px;
+    width: 100%; height: 54px;
     background: #1a1a2e; border: 1.5px solid #333360; border-radius: 10px;
-    color: #e0e0f0; font-size: 0.95rem; padding: 0.75rem 1rem;
+    color: #e0e0f0; font-size: 0.9rem; padding: 0.6rem 0.9rem;
     resize: none; outline: none; transition: border-color 0.2s; font-family: inherit;
   }
   textarea:focus { border-color: #7c3aed; }
@@ -114,7 +112,6 @@
   #board {
     display: grid;
     width: 100%;
-    aspect-ratio: 1;
     gap: 0;               /* gap: 0 — borders handle separation */
     border-radius: 8px;
     overflow: hidden;
@@ -133,7 +130,6 @@
     background-origin: border-box; /* image covers full piece incl. border area */
     transition: transform 0.12s, opacity 0.12s;
     background-color: #1a1a2e;
-    aspect-ratio: 1;
   }
   .piece:active { cursor: grabbing; }
 
@@ -288,9 +284,69 @@
   @keyframes countTick { from{transform:scale(1.4)} to{transform:scale(1)} }
   @keyframes starPop  { 0%{transform:scale(0) rotate(-30deg);opacity:0} 60%{transform:scale(1.35) rotate(8deg);opacity:1} 100%{transform:scale(1) rotate(0)} }
 
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg) scaleX(1); opacity: 1; }
+    50%  { transform: translateY(50vh) rotate(360deg) scaleX(-1); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scaleX(1); opacity: 0; }
+  }
+
+  /* ===== High Score Display (Setup) ===== */
+  .hs-display {
+    display: flex; gap: 0.6rem; justify-content: center; width: 100%; min-height: 2.6rem;
+  }
+  .hs-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.12rem;
+    background: #1a1a2e; border: 1px solid #2e2e58; border-radius: 8px; padding: 0.35rem 0.4rem;
+  }
+  .hs-item-label { font-size: 0.58rem; color: #666688; text-transform: uppercase; letter-spacing: 0.07em; }
+  .hs-item-val { font-size: 0.88rem; color: #c0c0f0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ===== New Record Badge ===== */
+  .new-record-badge {
+    display: none;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #0f0f1a;
+    font-weight: 900; font-size: 1.1rem;
+    padding: 0.4rem 1.4rem; border-radius: 20px;
+    animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    letter-spacing: 0.06em;
+  }
+  .new-record-badge.active { display: inline-block; }
+
+  /* ===== Clear High Score Row ===== */
+  .clear-hs-row {
+    font-size: 0.82rem; color: #8888aa;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .clear-hs-val { color: #c0c0f0; font-weight: 700; }
+
+  /* ===== Confetti ===== */
+  .confetti-piece {
+    position: fixed; pointer-events: none; z-index: 300;
+    width: 8px; height: 10px; border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+
   @media (max-width: 480px) {
     .screen { padding: 1rem; }
-    .game-header { flex-wrap: wrap; }
+    #screen-game { gap: 0.5rem; }
+    .game-header { gap: 0.4rem; }
+    .stat-box { padding: 0.3rem 0.55rem; min-width: 58px; }
+    .stat-label { font-size: 0.58rem; }
+    .stat-value { font-size: 0.95rem; }
+    .btn-small { padding: 0.35rem 0.65rem; font-size: 0.75rem; }
+    #overlay-clear {
+      justify-content: flex-start;
+      overflow-y: auto;
+      padding: 1.5rem 1rem;
+      gap: 1rem;
+    }
+    .clear-title { font-size: clamp(2rem, 9vw, 3rem); }
+    .clear-star { font-size: 2.2rem; }
+    .score-breakdown { max-width: 100%; }
+    .clear-buttons { flex-direction: column; width: 100%; max-width: 300px; }
+    .clear-buttons .btn-primary { width: 100%; }
   }
 </style>
 </head>
@@ -299,10 +355,6 @@
 <!-- Setup Screen -->
 <div id="screen-setup" class="screen active">
   <h1 class="title">PixJig</h1>
-  <p class="subtitle">キーワードで画像を検索してパズルを解こう！</p>
-
-  <label for="prompt-input">キーワード（検索語）</label>
-  <textarea id="prompt-input" placeholder="例: Mount Fuji, red fox forest, Tokyo night"></textarea>
 
   <div class="examples" id="examples">
     <span class="example-chip">🌸 桜と富士山</span>
@@ -313,15 +365,17 @@
     <span class="example-chip">🐉 ドラゴン</span>
   </div>
 
-  <label>難易度（グリッドサイズ）</label>
+  <textarea id="prompt-input" placeholder="キーワードを入力（例: red fox forest, Tokyo night）"></textarea>
+
   <div class="difficulty-group">
     <button class="diff-btn" data-size="3">3×3<br><small>9ピース</small></button>
     <button class="diff-btn selected" data-size="4">4×4<br><small>16ピース</small></button>
     <button class="diff-btn" data-size="5">5×5<br><small>25ピース</small></button>
   </div>
+  <div class="hs-display" id="hs-display"></div>
 
   <div id="setup-error" class="error-msg"></div>
-  <button id="btn-start" class="btn-primary">🔍 検索してスタート</button>
+  <button id="btn-start" class="btn-primary">スタート</button>
 </div>
 
 <!-- Loading Screen -->
@@ -377,6 +431,8 @@
     <span class="clear-score-label">スコア</span>
     <span class="clear-score-value" id="clear-score-value">0</span>
   </div>
+  <div class="new-record-badge" id="new-record-badge">🏆 NEW RECORD!</div>
+  <div class="clear-hs-row" id="clear-hs-row"></div>
   <div class="score-breakdown" id="score-breakdown"></div>
   <div class="clear-stats">
     <div class="clear-stat">
@@ -411,7 +467,31 @@ const State = {
   // drag
   dragSrcPos: null,
   dragGroupPositions: [],   // all positions in the dragged group
-  _eventsInitialized: false,
+  imageAspect: 1,           // width / height of source image
+};
+
+// =====================================================
+//  High Score
+// =====================================================
+const HighScore = {
+  _key: n => `pixjig_hs_${n}`,
+  get(n) {
+    try {
+      const v = localStorage.getItem(this._key(n));
+      if (!v) return null;
+      const p = JSON.parse(v);
+      // 旧フォーマット（数値のみ）は無視して null 扱い
+      return (p && typeof p === 'object') ? p : null;
+    } catch { return null; }
+  },
+  save(n, data) {
+    try { localStorage.setItem(this._key(n), JSON.stringify(data)); } catch {}
+  },
+  check(n, score, moves, ms) {
+    const best = this.get(n);
+    if (!best || score > best.score) { this.save(n, { score, moves, ms }); return true; }
+    return false;
+  }
 };
 
 // =====================================================
@@ -514,7 +594,7 @@ async function generateImage(prompt) {
         img.src = '';
         reject(new Error('画像の読み込みがタイムアウトしました'));
       }, 10000);
-      img.onload  = () => { clearTimeout(imgTimeout); resolve(imageUrl); };
+      img.onload  = () => { clearTimeout(imgTimeout); resolve({ url: imageUrl, aspect: (img.naturalWidth / img.naturalHeight) || 1 }); };
       img.onerror = () => { clearTimeout(imgTimeout); reject(new Error('画像の読み込みに失敗しました。もう一度試してください。')); };
       img.src = imageUrl;
     });
@@ -587,16 +667,20 @@ function renderBoard() {
   const board = document.getElementById('board');
   const n = State.gridSize;
   board.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  board.style.gridTemplateRows    = `repeat(${n}, 1fr)`;
+  board.style.aspectRatio = String(State.imageAspect);
 
-  const boardPx = board.offsetWidth || 400;
-  const piecePx = boardPx / n;
+  const boardW = board.offsetWidth || 400;
+  const boardH = boardW / State.imageAspect;
+  const pieceW = boardW / n;
+  const pieceH = boardH / n;
 
   const fragment = document.createDocumentFragment();
   State.pieces.forEach((piece, pos) => {
     const el = document.createElement('div');
     el.className = 'piece';
     el.dataset.pos = pos;
-    applyPieceStyle(el, piece, boardPx, piecePx, n);
+    applyPieceStyle(el, piece, boardW, boardH, pieceW, pieceH, n);
     applyPieceEdges(el, pos, n);
     fragment.appendChild(el);
   });
@@ -605,12 +689,12 @@ function renderBoard() {
   board.appendChild(fragment);
 }
 
-function applyPieceStyle(el, piece, boardPx, piecePx, n) {
+function applyPieceStyle(el, piece, boardW, boardH, pieceW, pieceH, n) {
   const col = piece.correctIndex % n;
   const row = Math.floor(piece.correctIndex / n);
   el.style.backgroundImage    = `url(${State.imageUrl})`;
-  el.style.backgroundSize     = `${boardPx}px ${boardPx}px`;
-  el.style.backgroundPosition = `${-col * piecePx}px ${-row * piecePx}px`;
+  el.style.backgroundSize     = `${boardW}px ${boardH}px`;
+  el.style.backgroundPosition = `${-col * pieceW}px ${-row * pieceH}px`;
   el.style.backgroundRepeat   = 'no-repeat';
   el.style.backgroundOrigin   = 'border-box';
 }
@@ -800,6 +884,23 @@ function showClearOverlay() {
       &nbsp;＝&nbsp;<strong>${score.toLocaleString('ja-JP')}</strong>
     </div>`;
 
+  // --- High Score ---
+  const badgeEl = document.getElementById('new-record-badge');
+  const hsRowEl = document.getElementById('clear-hs-row');
+  const clearTitleEl = document.querySelector('#overlay-clear .clear-title');
+  const isNewRecord = HighScore.check(State.gridSize, score, State.moveCount, State.elapsedMs);
+  badgeEl.classList.toggle('active', isNewRecord);
+  if (isNewRecord) {
+    clearTitleEl.textContent = '🏆 NEW RECORD!';
+    showConfetti();
+  } else {
+    clearTitleEl.textContent = '🎉 CLEAR!';
+  }
+  const best = HighScore.get(State.gridSize);
+  hsRowEl.innerHTML = best
+    ? `自己ベスト <span class="clear-hs-val">${best.score.toLocaleString('ja-JP')}</span><span style="color:#4a4a70">／</span>${best.moves}手<span style="color:#4a4a70">／</span>${formatTime(best.ms)}`
+    : '';
+
   document.getElementById('overlay-clear').classList.add('active');
 }
 
@@ -866,7 +967,6 @@ function showPreviewThenStart(imageUrl, gridSize) {
           Array.from({ length: total }, (_, i) => ({ correctIndex: i }))
         );
         State.isSolved = false;
-        State._eventsInitialized = false;
         renderBoard();
         initBoardEvents();
         initResizeObserver();
@@ -881,9 +981,10 @@ function showPreviewThenStart(imageUrl, gridSize) {
 // =====================================================
 //  Board Events (D&D + Touch)
 // =====================================================
+let _boardEventsInitialized = false;
 function initBoardEvents() {
-  if (State._eventsInitialized) return;
-  State._eventsInitialized = true;
+  if (_boardEventsInitialized) return;
+  _boardEventsInitialized = true;
 
   const board = document.getElementById('board');
 
@@ -909,15 +1010,15 @@ function initBoardEvents() {
     // --- Build composite ghost image for the whole group ---
     const n = State.gridSize;
     const boardRect = board.getBoundingClientRect();
-    const piecePx = boardRect.width / n;
-    const boardPx  = boardRect.width;
+    const pieceW = boardRect.width  / n;
+    const pieceH = boardRect.height / n;
 
     const groupRows = State.dragGroupPositions.map(p => Math.floor(p / n));
     const groupCols = State.dragGroupPositions.map(p => p % n);
     const minRow = Math.min(...groupRows), maxRow = Math.max(...groupRows);
     const minCol = Math.min(...groupCols), maxCol = Math.max(...groupCols);
-    const ghostW = (maxCol - minCol + 1) * piecePx;
-    const ghostH = (maxRow - minRow + 1) * piecePx;
+    const ghostW = (maxCol - minCol + 1) * pieceW;
+    const ghostH = (maxRow - minRow + 1) * pieceH;
 
     const ghost = document.createElement('div');
     ghost.style.cssText = `position:fixed;left:-9999px;top:-9999px;
@@ -930,11 +1031,11 @@ function initBoardEvents() {
       const ci = State.pieces[p].correctIndex;
       const seg = document.createElement('div');
       seg.style.cssText = `position:absolute;
-        left:${pc * piecePx}px;top:${pr * piecePx}px;
-        width:${piecePx}px;height:${piecePx}px;`;
+        left:${pc * pieceW}px;top:${pr * pieceH}px;
+        width:${pieceW}px;height:${pieceH}px;`;
       seg.style.backgroundImage    = `url(${State.imageUrl})`;
-      seg.style.backgroundSize     = `${boardPx}px ${boardPx}px`;
-      seg.style.backgroundPosition = `${-(ci % n) * piecePx}px ${-Math.floor(ci / n) * piecePx}px`;
+      seg.style.backgroundSize     = `${boardRect.width}px ${boardRect.height}px`;
+      seg.style.backgroundPosition = `${-(ci % n) * pieceW}px ${-Math.floor(ci / n) * pieceH}px`;
       seg.style.backgroundRepeat   = 'no-repeat';
       seg.style.backgroundOrigin   = 'border-box';
       ghost.appendChild(seg);
@@ -946,8 +1047,8 @@ function initBoardEvents() {
     const srcCol = (srcPos % n) - minCol;
     const srcRow = Math.floor(srcPos / n) - minRow;
     const pieceRect = piece.getBoundingClientRect();
-    const ox = srcCol * piecePx + (e.clientX - pieceRect.left);
-    const oy = srcRow * piecePx + (e.clientY - pieceRect.top);
+    const ox = srcCol * pieceW + (e.clientX - pieceRect.left);
+    const oy = srcRow * pieceH + (e.clientY - pieceRect.top);
     e.dataTransfer.setDragImage(ghost, ox, oy);
 
     // Browser captures the drag image synchronously; remove after one tick
@@ -1037,15 +1138,16 @@ function initBoardEvents() {
     const n = State.gridSize;
     const board = document.getElementById('board');
     const boardRect = board.getBoundingClientRect();
-    const piecePx = boardRect.width / n;
+    const pieceW = boardRect.width  / n;
+    const pieceH = boardRect.height / n;
 
     // Group bounding box in grid coords
     const groupRows = touchGroupPositions.map(p => Math.floor(p / n));
     const groupCols = touchGroupPositions.map(p => p % n);
     const minRow = Math.min(...groupRows), maxRow = Math.max(...groupRows);
     const minCol = Math.min(...groupCols), maxCol = Math.max(...groupCols);
-    const ghostW = (maxCol - minCol + 1) * piecePx;
-    const ghostH = (maxRow - minRow + 1) * piecePx;
+    const ghostW = (maxCol - minCol + 1) * pieceW;
+    const ghostH = (maxRow - minRow + 1) * pieceH;
 
     const ghost = document.createElement('div');
     ghost.style.cssText = `
@@ -1061,15 +1163,13 @@ function initBoardEvents() {
       const seg = document.createElement('div');
       seg.style.cssText = `
         position:absolute;
-        left:${pc * piecePx}px; top:${pr * piecePx}px;
-        width:${piecePx}px; height:${piecePx}px;
+        left:${pc * pieceW}px; top:${pr * pieceH}px;
+        width:${pieceW}px; height:${pieceH}px;
       `;
-      const pi = State.pieces[p];
-      const ci = pi.correctIndex;
-      const boardPx = boardRect.width;
+      const ci = State.pieces[p].correctIndex;
       seg.style.backgroundImage    = `url(${State.imageUrl})`;
-      seg.style.backgroundSize     = `${boardPx}px ${boardPx}px`;
-      seg.style.backgroundPosition = `${-(ci % n) * piecePx}px ${-Math.floor(ci / n) * piecePx}px`;
+      seg.style.backgroundSize     = `${boardRect.width}px ${boardRect.height}px`;
+      seg.style.backgroundPosition = `${-(ci % n) * pieceW}px ${-Math.floor(ci / n) * pieceH}px`;
       seg.style.backgroundRepeat   = 'no-repeat';
       seg.style.backgroundOrigin   = 'border-box';
       ghost.appendChild(seg);
@@ -1186,6 +1286,7 @@ document.querySelectorAll('.diff-btn').forEach(btn => {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     State.gridSize = parseInt(btn.dataset.size);
+    updateHsDisplay();
   });
 });
 
@@ -1201,12 +1302,12 @@ document.getElementById('btn-start').addEventListener('click', async () => {
   }
 
   State.prompt = prompt;
-  State._eventsInitialized = false;
   document.getElementById('btn-start').disabled = true;
   showScreen('screen-loading');
 
   try {
-    const url = await generateImage(prompt);
+    const { url, aspect } = await generateImage(prompt);
+    State.imageAspect = aspect;
     showPreviewThenStart(url, State.gridSize);
   } catch (err) {
     showScreen('screen-setup');
@@ -1232,26 +1333,61 @@ document.getElementById('btn-shuffle').addEventListener('click', () => {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   Timer.stop();
-  State._eventsInitialized = false;
   document.getElementById('overlay-clear').classList.remove('active');
   document.getElementById('overlay-preview').classList.remove('active');
   showScreen('screen-setup');
+  updateHsDisplay();
 });
 
 document.getElementById('btn-retry-same').addEventListener('click', () => {
   document.getElementById('overlay-clear').classList.remove('active');
-  State._eventsInitialized = false;
   showPreviewThenStart(State.imageUrl, State.gridSize);
 });
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
   Timer.stop();
-  State._eventsInitialized = false;
   document.getElementById('overlay-clear').classList.remove('active');
   showScreen('screen-setup');
+  updateHsDisplay();
 });
 
 document.getElementById('board').addEventListener('contextmenu', e => e.preventDefault());
+
+// =====================================================
+//  Confetti
+// =====================================================
+function showConfetti() {
+  const colors = ['#fbbf24','#f472b6','#a78bfa','#60a5fa','#34d399','#fb923c'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top = '-20px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    el.style.animationDelay = (Math.random() * 0.8) + 's';
+    el.style.width = (6 + Math.random() * 6) + 'px';
+    el.style.height = (8 + Math.random() * 8) + 'px';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// =====================================================
+//  HS Display (Setup Screen)
+// =====================================================
+function updateHsDisplay() {
+  const el = document.getElementById('hs-display');
+  if (!el) return;
+  const best = HighScore.get(State.gridSize);
+  if (!best) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="hs-item"><span class="hs-item-label">スコア</span><span class="hs-item-val">${best.score.toLocaleString('ja-JP')}</span></div>
+    <div class="hs-item"><span class="hs-item-label">手数</span><span class="hs-item-val">${best.moves}</span></div>
+    <div class="hs-item"><span class="hs-item-label">タイム</span><span class="hs-item-val">${formatTime(best.ms)}</span></div>
+  `;
+}
+updateHsDisplay();
 </script>
 </body>
 </html>
